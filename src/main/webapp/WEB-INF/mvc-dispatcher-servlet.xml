@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/beans     
+        http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd">
+ 
+	<mvc:annotation-driven />
+ 	<mvc:default-servlet-handler/>
+ 	
+	<bean id="memcached-datasource" class="fi.itsfactory.realtime.access.MemcachedDatasource" scope="prototype">
+		<constructor-arg index="0" value="localhost:11211"></constructor-arg>
+		<constructor-arg index="1" value="SIRI_VM_LATEST_ALL"></constructor-arg>
+	</bean>
+	
+	<bean class="fi.itsfactory.realtime.access.RealtimeApiController">
+ 		<constructor-arg ref="memcached-datasource"/>
+ 	</bean>
+</beans>
