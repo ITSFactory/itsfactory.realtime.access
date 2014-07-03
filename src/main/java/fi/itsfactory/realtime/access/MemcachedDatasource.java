@@ -22,16 +22,18 @@ import org.xml.sax.SAXException;
 
 import fi.itsfactory.realtime.access.siri.vm.VMResponseFilter;
 
-public class MemcachedDatasource implements SiriVMDatasource {
+public class MemcachedDatasource implements SiriDatasource {
 	private static final Logger logger = LoggerFactory.getLogger(MemcachedDatasource.class);
 	
 	private String cacheUrl;
 	private String vmKey;
+	private String gmKey;
 	private SAXParser responseSAXParser;
 	
-	public MemcachedDatasource(String cacheUrl, String vmKey) {
+	public MemcachedDatasource(String cacheUrl, String vmKey, String gmKey) {
 		this.cacheUrl = cacheUrl;
 		this.vmKey = vmKey;
+		this.gmKey = gmKey;
 		
 		responseSAXParser = null;
 	}
@@ -68,13 +70,59 @@ public class MemcachedDatasource implements SiriVMDatasource {
 						+ "Check the logs for startup exceptions.");
 				return null;
 			}
-		} catch (IOException | TimeoutException | InterruptedException | MemcachedException | SAXException
-				| TransformerFactoryConfigurationError | TransformerException e) {
-			logger.error("Cannot process request", e);
-			return null;
-		}
+		}catch(IOException e){
+		    logger.error("Cannot process request", e);
+		    return null;		    
+		} catch (SAXException e) {
+            logger.error("Cannot process request", e);
+            return null;            
+        } catch (TransformerFactoryConfigurationError e) {
+            logger.error("Cannot process request", e);
+            return null;            
+        } catch (TransformerException e) {
+            logger.error("Cannot process request", e);
+            return null;            
+        } catch (TimeoutException e) {
+            logger.error("Cannot process request", e);
+            return null;            
+        } catch (InterruptedException e) {
+            logger.error("Cannot process request", e);
+            return null;            
+        } catch (MemcachedException e) {
+            logger.error("Cannot process request", e);
+            return null;            
+        }
 	}
 
+	    public String getGeneralMessageData() {
+	        try {
+	            /*
+	             * Fetch the cached response. A backend process updates the
+	             * (mem)cache(d) periodically (once per second). cacheUrl and gmKey(the
+	             * key the backend process uses to store the response) are injected into
+	             * this class in the constructor.
+	             */
+	            MemcachedClientBuilder builder = new XMemcachedClientBuilder(AddrUtil.getAddresses(cacheUrl));
+	            MemcachedClient memcachedClient = builder.build();
+	            String latestVM = memcachedClient.get(gmKey);
+	            memcachedClient.shutdown();
+
+	            return latestVM;
+	        } catch (IOException e) {
+	            logger.error("Cannot process request", e);
+	            return null;
+	        } catch (TimeoutException e) {
+                logger.error("Cannot process request", e);
+                return null;
+            } catch (InterruptedException e) {
+                logger.error("Cannot process request", e);
+                return null;
+            } catch (MemcachedException e) {
+                logger.error("Cannot process request", e);
+                return null;
+            }
+	    }
+	
 	@Override
 	public void initialize() {
 		try {

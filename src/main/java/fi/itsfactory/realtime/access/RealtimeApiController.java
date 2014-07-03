@@ -22,6 +22,8 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.xml.sax.SAXException;
 
+import uk.org.siri.siri.GeneralMessageDeliveriesStructure;
+import uk.org.siri.siri.GeneralMessageRequestStructure;
 import uk.org.siri.siri.Siri;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -40,13 +42,13 @@ public class RealtimeApiController {
 	private SAXParser requestSAXParser = null;
 	private JAXBContext jaxbContext = null;
 
-	private SiriVMDatasource datasource;
+	private SiriDatasource datasource;
 
 	/*
 	 * We dont want to create SAX parser and JAXBContext every time when the message arrives, so we create
 	 * those on Servlet (this class) startup and use those from there on.
 	 */
-	public RealtimeApiController(SiriVMDatasource datasource) {
+	public RealtimeApiController(SiriDatasource datasource) {
 		try {
 			SAXParserFactory factory = SAXParserFactory.newInstance();
 			factory.setNamespaceAware(true);
@@ -114,21 +116,10 @@ public class RealtimeApiController {
 				String xmlResponse = datasource.getVehicleMonitoringData(lineRef, vehicleRef);
 
 				if (xmlResponse != null) {
-					StringReader reader = new StringReader(xmlResponse);
-					Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-
-					Siri siri = (Siri) unmarshaller.unmarshal(reader);
-
-					ObjectMapper mapper = new ObjectMapper();
-					@SuppressWarnings("deprecation")
-					AnnotationIntrospector introspector = new JaxbAnnotationIntrospector();
-					mapper.setAnnotationIntrospector(introspector);
-					mapper.setSerializationInclusion(Include.NON_NULL);
-					mapper.enable(SerializationFeature.WRAP_ROOT_VALUE);
-					if (indent != null && indent.equals("yes")) {
-						mapper.enable(SerializationFeature.INDENT_OUTPUT);
-					}
-					return mapper.writeValueAsString(siri);
+                    Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+                    Siri siri = (Siri) unmarshaller.unmarshal(new StringReader(xmlResponse));                    
+                    SiriJsonBuilder jsonBuilder = new SiriJsonBuilder(siri);
+                    return jsonBuilder.buildJson(indent);				    
 				} else {
 					return "";
 				}
@@ -215,4 +206,64 @@ public class RealtimeApiController {
 					"Request parser did not initialize properly, cannot process request.");
 		}
 	}
+	
+	   /**
+     * getSiriGM retrieves SIRI General Message deliveries as XML documents. Charset is UTF-8.
+     * 
+     * @return General Message deliveries as XML string
+     */
+    @RequestMapping(value = "/gm/siri", method = RequestMethod.POST, produces = "application/xml; charset=utf-8")
+    public @ResponseBody
+    String getSiriGM() {
+        if (requestSAXParser != null && datasource != null) {
+            try {  
+                return datasource.getGeneralMessageData();
+            } catch (Exception e) {
+                logger.error("Cannot process SIRI request", e);
+                return APIHelper.createXmlError("Internal server error", e.getMessage());
+            } catch (Error e) {
+                logger.error("Cannot process SIRI request", e);
+                return APIHelper.createXmlError("Internal server error", e.getMessage());
+            }
+        } else {
+            logger.error("Request parser did not initialize properly, cannot process request. Check the logs for startup exceptions.");
+            return APIHelper.createXmlError("Internal server error",
+                    "Request parser did not initialize properly, cannot process request.");
+        }
+    }
+
+    /**
+     * getJsonGM retrieves SIRI General Message deliveries as JSON documents. Charset is UTF-8.
+     * 
+     * @return General Message deliveries as JSON string
+     */
+    @RequestMapping(value = "/gm/json", method = RequestMethod.GET, produces = "application/json; charset=utf-8")
+    public @ResponseBody
+    String getJsonGM(
+            @RequestParam(value = "indent", required = false) String indent) {
+        if (datasource != null) {
+            try {
+                String xmlResponse = datasource.getGeneralMessageData();
+                if (xmlResponse != null) {
+                    Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+                    Siri siri = (Siri) unmarshaller.unmarshal(new StringReader(xmlResponse));                    
+                    SiriJsonBuilder jsonBuilder = new SiriJsonBuilder(siri);
+                    return jsonBuilder.buildJson(indent);
+                } else {
+                    return "";
+                }
+
+            } catch (Exception e) {
+                logger.error("Cannot process SIRI request", e);
+                return APIHelper.createJsonError("Internal server error", e.getMessage());
+            } catch (Error e) {
+                logger.error("Cannot process SIRI request", e);
+                return APIHelper.createJsonError("Internal server error", e.getMessage());
+            }
+        } else {
+            logger.error("Request parser did not initialize properly, cannot process request. Check the logs for startup exceptions.");
+            return APIHelper.createJsonError("Internal server error",
+                    "Request parser did not initialize properly, cannot process request.");
+        }
+    }
 }
