@@ -115,13 +115,13 @@ public class RealtimeApiController {
 			try {
 				String xmlResponse = datasource.getVehicleMonitoringData(lineRef, vehicleRef);
 
-				if (xmlResponse != null) {
+				if (xmlResponse != null && !xmlResponse.startsWith("<!DOCTYPE html")) {
                     Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
                     Siri siri = (Siri) unmarshaller.unmarshal(new StringReader(xmlResponse));                    
                     SiriJsonBuilder jsonBuilder = new SiriJsonBuilder(siri);
                     return jsonBuilder.buildJson(indent);				    
 				} else {
-					return "";
+				    return APIHelper.createJsonError("Internal server error", "backend error");
 				}
 
 			} catch (Exception e) {
