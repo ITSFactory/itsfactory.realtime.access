@@ -54,6 +54,6 @@ public class APIHelper {
 		} 
 	}
 	public static String createJsonError(String message, String details){
-		return null;
+		return "{\"error\":\"internal error\"}";
 	}
 }
