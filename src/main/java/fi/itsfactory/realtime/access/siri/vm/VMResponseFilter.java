@@ -91,7 +91,9 @@ public class VMResponseFilter extends DefaultHandler {
 			vehicleRefMatched = true;
 		}else if(filteringLineRef != null && "JourneyPatternRef".equals(currentElement.getNodeName()) && filteringLineRef.equals(contents)){
 			lineRefMatched = true;
-		}
+		}else if(filteringLineRef != null && "LineRef".equals(currentElement.getNodeName()) && filteringLineRef.equals(contents)){
+            lineRefMatched = true;
+        }
 
 		if("JourneyPatternRef".equals(currentElement.getNodeName())){
 		    journeyPatternRef = contents;
