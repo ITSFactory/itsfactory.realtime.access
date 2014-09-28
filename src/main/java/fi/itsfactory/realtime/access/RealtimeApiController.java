@@ -22,16 +22,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.xml.sax.SAXException;
 
-import uk.org.siri.siri.GeneralMessageDeliveriesStructure;
-import uk.org.siri.siri.GeneralMessageRequestStructure;
 import uk.org.siri.siri.Siri;
-
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.AnnotationIntrospector;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
-
 import fi.itsfactory.realtime.access.gtfsrt.vp.GtfsRtBuilder;
 import fi.itsfactory.realtime.access.siri.vm.SiriRequestHandler;
 

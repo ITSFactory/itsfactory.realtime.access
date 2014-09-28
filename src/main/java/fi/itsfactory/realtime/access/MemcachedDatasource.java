@@ -59,11 +59,9 @@ public class MemcachedDatasource implements SiriDatasource {
 				 * single document to the cache, which contains data for all
 				 * vehicles, we have to parse the XML and filter our during parsing.
 				 */
-				if (lineRef != null || vehicleRef != null) {
-					VMResponseFilter responseFilter = new VMResponseFilter(lineRef, vehicleRef);
-					responseSAXParser.parse(new ByteArrayInputStream(latestVM.getBytes()), responseFilter);
-					latestVM = responseFilter.getFilteredDocument();
-				}
+				VMResponseFilter responseFilter = new VMResponseFilter(lineRef, vehicleRef);
+				responseSAXParser.parse(new ByteArrayInputStream(latestVM.getBytes()), responseFilter);
+				latestVM = responseFilter.getFilteredDocument();
 				return latestVM;
 			} else {
 				logger.error("Response parser not initialized properly, cannot process request since client requests filtering. "

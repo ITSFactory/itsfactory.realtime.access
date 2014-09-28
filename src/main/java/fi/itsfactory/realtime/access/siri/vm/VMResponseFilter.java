@@ -36,17 +36,19 @@ public class VMResponseFilter extends DefaultHandler {
 	private Node currentElement;
 	private Element rootElement;
 	
-	private String lineRef;
-	private String vehicleRef;
+	private String filteringLineRef;
+	private String filteringVehicleRef;
+	private String journeyPatternRef;
 	
 	private boolean lineRefMatched;
 	private boolean vehicleRefMatched;
 	
 	public VMResponseFilter(String lineRef, String vehicleRef) {
-		this.lineRef = lineRef;
-		this.vehicleRef = vehicleRef;
+		this.filteringLineRef = lineRef;
+		this.filteringVehicleRef = vehicleRef;
 		
 		currentElement = null;
+		journeyPatternRef = null;
 		lineRefMatched = false;
 		vehicleRefMatched = false;
 		
@@ -85,30 +87,50 @@ public class VMResponseFilter extends DefaultHandler {
 	public void characters(char ch[], int start, int length) throws SAXException {
 		String contents = new String(ch, start, length).trim();
 		currentElement.setTextContent(contents);
-		if(vehicleRef != null && "VehicleRef".equals(currentElement.getNodeName()) && vehicleRef.equals(contents)){
+		if(filteringVehicleRef != null && "VehicleRef".equals(currentElement.getNodeName()) && filteringVehicleRef.equals(contents)){
 			vehicleRefMatched = true;
-		}else if(lineRef != null && "LineRef".equals(currentElement.getNodeName()) && lineRef.equals(contents)){
+		}else if(filteringLineRef != null && "JourneyPatternRef".equals(currentElement.getNodeName()) && filteringLineRef.equals(contents)){
 			lineRefMatched = true;
+		}
+
+		if("JourneyPatternRef".equals(currentElement.getNodeName())){
+		    journeyPatternRef = contents;
+		}else if("DatedVehicleJourneyRef".equals(currentElement.getNodeName())){
+		    String parts[] = contents.split("_");
+		    if(parts.length == 3){
+		        currentElement.setTextContent(parts[parts.length - 1]);
+		    }
 		}
 	}
 	
 	@Override
 	public void endElement(String uri, String localName, String qName) throws SAXException {
-		Node parent = currentElement.getParentNode();
-		/*
-		 * If client has specified both lineRef and vehicleRef filters, an element must not match either in order 
-		 * to be incluced. If the client has specified only one of the filters, the element must not match that filter
-		 */
+	    Node parent = currentElement.getParentNode();
 		if("VehicleActivity".equals(qName)){
-			if((lineRef != null && vehicleRef != null && lineRefMatched == false && vehicleRefMatched == false) ||
-					(lineRef != null && lineRefMatched == false) ||
-					(vehicleRef != null && vehicleRefMatched == false)){
+	        /*
+	         * If client has specified both lineRef and vehicleRef filters, an element must not match either in order
+	         * to be incluced. If the client has specified only one of the filters, the element must not match that filter
+	         */
+	        if((filteringLineRef != null && filteringVehicleRef != null && lineRefMatched == false && vehicleRefMatched == false) ||
+					(filteringLineRef != null && lineRefMatched == false) ||
+					(filteringVehicleRef != null && vehicleRefMatched == false)){
 			
 				lineRefMatched = false;
 				vehicleRefMatched = false;
 				parent.removeChild(currentElement);
+			}else{
+			    if(currentElement != null && journeyPatternRef != null 
+			            && ((Element)currentElement).getElementsByTagName("LineRef").getLength() > 0){
+			        ((Element)currentElement).getElementsByTagName("LineRef").item(0).setTextContent(journeyPatternRef);
+			        journeyPatternRef = null;
+			    }
 			}
-		}		
+		}else if("Extensions".equals(qName) || "OriginAimedDepartureTime".equals(qName)
+		        || "DestinationShortName".equals(qName) || "OriginShortName".equals(qName) || "OnwardCalls".equals(qName)){
+		    parent.removeChild(currentElement);
+		}else if("JourneyPatternRef".equals(qName)){
+            parent.removeChild(currentElement);
+        }
 		currentElement = parent;
 	}
 	
