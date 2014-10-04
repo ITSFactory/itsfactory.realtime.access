@@ -103,25 +103,24 @@ public class RealtimeApiController {
 			@RequestParam(value = "vehicleRef", required = false) String vehicleRef,
 			@RequestParam(value = "indent", required = false) String indent) {
 		if (datasource != null) {
-			try {
-				String xmlResponse = datasource.getVehicleMonitoringData(lineRef, vehicleRef);
+            try {
+                String xmlResponse = datasource.getVehicleMonitoringData(lineRef, vehicleRef);
 
-				if (xmlResponse != null && !xmlResponse.startsWith("<!DOCTYPE html")) {
+                if (xmlResponse != null && !xmlResponse.startsWith("<!DOCTYPE html")) {
                     Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-                    Siri siri = (Siri) unmarshaller.unmarshal(new StringReader(xmlResponse));                    
+                    Siri siri = (Siri) unmarshaller.unmarshal(new StringReader(xmlResponse));
                     SiriJsonBuilder jsonBuilder = new SiriJsonBuilder(siri);
-                    return jsonBuilder.buildJson(indent);				    
-				} else {
-				    return APIHelper.createJsonError("Internal server error", "backend error");
-				}
-
-			} catch (Exception e) {
-				logger.error("Cannot process SIRI request", e);
-				return APIHelper.createJsonError("Internal server error", e.getMessage());
-			} catch (Error e) {
-				logger.error("Cannot process SIRI request", e);
-				return APIHelper.createJsonError("Internal server error", e.getMessage());
-			}
+                    return jsonBuilder.buildJson(indent);
+                } else {
+                    return APIHelper.createJsonError("Internal server error", "backend error");
+                }
+            } catch (Exception e) {
+                logger.error("Cannot process SIRI request", e);
+                return APIHelper.createJsonError("Internal server error", e.getMessage());
+            } catch (Error e) {
+                logger.error("Cannot process SIRI request", e);
+                return APIHelper.createJsonError("Internal server error", e.getMessage());
+            }
 		} else {
 			logger.error("Request parser did not initialize properly, cannot process request. Check the logs for startup exceptions.");
 			return APIHelper.createJsonError("Internal server error",

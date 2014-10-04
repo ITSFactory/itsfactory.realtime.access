@@ -7,13 +7,13 @@ import java.util.concurrent.TimeoutException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactoryConfigurationError;
 
 import net.rubyeye.xmemcached.MemcachedClient;
 import net.rubyeye.xmemcached.MemcachedClientBuilder;
 import net.rubyeye.xmemcached.XMemcachedClientBuilder;
 import net.rubyeye.xmemcached.exception.MemcachedException;
+import net.rubyeye.xmemcached.transcoders.SerializingTranscoder;
 import net.rubyeye.xmemcached.utils.AddrUtil;
 
 import org.slf4j.Logger;
@@ -39,56 +39,56 @@ public class MemcachedDatasource implements SiriDatasource {
 	}
 	
 	@Override
-	public String getVehicleMonitoringData(String lineRef, String vehicleRef) {
-		try {
-			/*
-			 * Fetch the cached response. A backend process updates the
-			 * (mem)cache(d) periodically (once per second). cacheUrl and vmKey(the
-			 * key the backend process uses to store the response) are injected into
-			 * this class in the constructor.
-			 */
-			MemcachedClientBuilder builder = new XMemcachedClientBuilder(AddrUtil.getAddresses(cacheUrl));
-			MemcachedClient memcachedClient = builder.build();
-			String latestVM = memcachedClient.get(vmKey);
-			memcachedClient.shutdown();
+	public synchronized String getVehicleMonitoringData(String lineRef, String vehicleRef) {
+        try {
+            /*
+             * Fetch the cached response. A backend process updates the (mem)cache(d) periodically (once per
+             * second). cacheUrl and vmKey(the key the backend process uses to store the response) are
+             * injected into this class in the constructor.
+             */
+            MemcachedClientBuilder builder = new XMemcachedClientBuilder(AddrUtil.getAddresses(cacheUrl));
+            MemcachedClient memcachedClient = builder.build();
+            memcachedClient.setTranscoder(new SerializingTranscoder(100 * 1024 * 1024));
+            String latestVM = memcachedClient.get(vmKey);
 
-			if (responseSAXParser != null) { // init failed, don't even try
-				/*
-				 * If the client has specified either lineRef or vehicleRef, we have
-				 * to filter the response. Since the backend system pushes one
-				 * single document to the cache, which contains data for all
-				 * vehicles, we have to parse the XML and filter our during parsing.
-				 */
-				VMResponseFilter responseFilter = new VMResponseFilter(lineRef, vehicleRef);
-				responseSAXParser.parse(new ByteArrayInputStream(latestVM.getBytes()), responseFilter);
-				latestVM = responseFilter.getFilteredDocument();
-				return latestVM;
-			} else {
-				logger.error("Response parser not initialized properly, cannot process request since client requests filtering. "
-						+ "Check the logs for startup exceptions.");
-				return null;
-			}
-		}catch(IOException e){
-		    logger.error("Cannot process request", e);
-		    return null;		    
-		} catch (SAXException e) {
+            memcachedClient.shutdown();
+
+            if (responseSAXParser != null) { // init failed, don't even try
+                /*
+                 * If the client has specified either lineRef or vehicleRef, we have to filter the response.
+                 * Since the backend system pushes one single document to the cache, which contains data for
+                 * all vehicles, we have to parse the XML and filter our during parsing.
+                 */
+                try {
+                    VMResponseFilter responseFilter = new VMResponseFilter(lineRef, vehicleRef);
+                    responseSAXParser.parse(new ByteArrayInputStream(latestVM.getBytes()), responseFilter);
+                    latestVM = responseFilter.getFilteredDocument();
+                    return latestVM;
+                } catch (SAXException e) {
+                    return null;
+                } catch (Throwable t) {
+                    return null;
+                }
+            } else {
+                logger.error("Response parser not initialized properly, cannot process request since client requests filtering. "
+                        + "Check the logs for startup exceptions.");
+                return null;
+            }
+        } catch (IOException e) {
             logger.error("Cannot process request", e);
-            return null;            
+            return null;
         } catch (TransformerFactoryConfigurationError e) {
             logger.error("Cannot process request", e);
-            return null;            
-        } catch (TransformerException e) {
-            logger.error("Cannot process request", e);
-            return null;            
+            return null;
         } catch (TimeoutException e) {
             logger.error("Cannot process request", e);
-            return null;            
+            return null;
         } catch (InterruptedException e) {
             logger.error("Cannot process request", e);
-            return null;            
+            return null;
         } catch (MemcachedException e) {
             logger.error("Cannot process request", e);
-            return null;            
+            return null;
         }
 	}
 
