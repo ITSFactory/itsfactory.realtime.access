@@ -54,6 +54,6 @@ public class APIHelper {
 		} 
 	}
 	public static String createJsonError(String message, String details){
-		return "{\"error\":\""+message+"\"}";
+		return "{\"error\":\""+message+"\",\"details\":\""+details+"\"}";
 	}
 }
