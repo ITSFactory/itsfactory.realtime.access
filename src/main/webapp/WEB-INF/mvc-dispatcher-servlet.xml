@@ -22,8 +22,15 @@
 		<constructor-arg index="1" value="${memcached.vm.key}"></constructor-arg>
 		<constructor-arg index="2" value="${memcached.gm.key}"></constructor-arg>
 	</bean>
+
+	<bean id="memcached-datasource-2" class="fi.itsfactory.realtime.access.MemcachedDatasourceV2" scope="prototype">
+		<constructor-arg index="0" value="${memcached.url}"></constructor-arg>
+		<constructor-arg index="1" value="${memcached.vm.key}"></constructor-arg>
+		<constructor-arg index="2" value="${memcached.gm.key}"></constructor-arg>
+	</bean>
 	
 	<bean class="fi.itsfactory.realtime.access.RealtimeApiController">
  		<constructor-arg ref="memcached-datasource"/>
+ 		<constructor-arg ref="memcached-datasource-2"/>
  	</bean>
 </beans>

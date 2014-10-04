@@ -34,12 +34,13 @@ public class RealtimeApiController {
 	private JAXBContext jaxbContext = null;
 
 	private SiriDatasource datasource;
+	private SiriDatasource datasourceV2;
 
 	/*
 	 * We dont want to create SAX parser and JAXBContext every time when the message arrives, so we create
 	 * those on Servlet (this class) startup and use those from there on.
 	 */
-	public RealtimeApiController(SiriDatasource datasource) {
+	public RealtimeApiController(SiriDatasource datasource, SiriDatasource datasourceV2) {
 		try {
 			SAXParserFactory factory = SAXParserFactory.newInstance();
 			factory.setNamespaceAware(true);
@@ -49,6 +50,10 @@ public class RealtimeApiController {
 
 			this.datasource = datasource;
 			this.datasource.initialize();
+			
+			this.datasourceV2 = datasourceV2;
+			this.datasourceV2.initialize();
+			
 			logger.info("A SIRI VM StoreController started up successfully.");
 		} catch (SAXException e) {
 			e.printStackTrace();
@@ -91,6 +96,38 @@ public class RealtimeApiController {
 					"Request parser did not initialize properly, cannot process request.");
 		}
 	}
+	
+	   /**
+     * getSiriVM retrieves SIRI Vehicle Monitoring deliveries as XML documents. Charset is UTF-8.
+     * 
+     * @return Vehicle Monitoring deliveries as XML string
+     */
+    @RequestMapping(value = "/vm/siri/2", method = RequestMethod.POST, produces = "application/xml; charset=utf-8")
+    public @ResponseBody
+    String getSiriVM2() {
+        if (requestSAXParser != null && datasource != null) {
+            try {
+                HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder
+                        .currentRequestAttributes()).getRequest();
+
+                SiriRequestHandler requestHandler = new SiriRequestHandler();
+                requestSAXParser.parse(request.getInputStream(), requestHandler);
+
+                return datasourceV2.getVehicleMonitoringData(requestHandler.getLineRef(),
+                        requestHandler.getVehicleRef());
+            } catch (Exception e) {
+                logger.error("Cannot process SIRI request", e);
+                return APIHelper.createXmlError("Internal server error", e.getMessage());
+            } catch (Error e) {
+                logger.error("Cannot process SIRI request", e);
+                return APIHelper.createXmlError("Internal server error", e.getMessage());
+            }
+        } else {
+            logger.error("Request parser did not initialize properly, cannot process request. Check the logs for startup exceptions.");
+            return APIHelper.createXmlError("Internal server error",
+                    "Request parser did not initialize properly, cannot process request.");
+        }
+    }
 
 	/**
 	 * getJsonVM retrieves SIRI Vehicle Monitoring deliveries as JSON documents. Charset is UTF-8.
