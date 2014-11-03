@@ -172,7 +172,7 @@ public class RealtimeApiController {
         }
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
-        return new ResponseEntity<String>(resultResponse, responseHeaders, HttpStatus.CREATED);
+        return new ResponseEntity<String>(resultResponse, responseHeaders, HttpStatus.OK);
 	}
 
 	/**
@@ -248,7 +248,7 @@ public class RealtimeApiController {
         }
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
-        return new ResponseEntity<String>(resultResponse, responseHeaders, HttpStatus.CREATED);
+        return new ResponseEntity<String>(resultResponse, responseHeaders, HttpStatus.OK);
 	}
 	
 	   /**
@@ -315,6 +315,6 @@ public class RealtimeApiController {
         }
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
-        return new ResponseEntity<String>(resultResponse, responseHeaders, HttpStatus.CREATED);
+        return new ResponseEntity<String>(resultResponse, responseHeaders, HttpStatus.OK);
     }
 }
