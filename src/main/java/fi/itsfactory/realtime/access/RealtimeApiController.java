@@ -13,6 +13,9 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -135,11 +138,11 @@ public class RealtimeApiController {
 	 * @return Vehicle Monitoring deliveries as JSON string
 	 */
 	@RequestMapping(value = "/vm/rest", method = RequestMethod.GET, produces = "application/json; charset=utf-8")
-	public @ResponseBody
-	String getJsonVM(@RequestParam(value = "lineRef", required = false) String lineRef,
+	public ResponseEntity<String> getJsonVM(@RequestParam(value = "lineRef", required = false) String lineRef,
 			@RequestParam(value = "vehicleRef", required = false) String vehicleRef,
-			@RequestParam(value = "indent", required = false) String indent) {
-		if (datasource != null) {
+			@RequestParam(value = "indent", required = false) String indent) {		
+	    String resultResponse;
+	    if (datasource != null) {
             try {
                 String xmlResponse = datasource.getVehicleMonitoringData(lineRef, vehicleRef);
 
@@ -147,22 +150,29 @@ public class RealtimeApiController {
                     Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
                     Siri siri = (Siri) unmarshaller.unmarshal(new StringReader(xmlResponse));
                     SiriJsonBuilder jsonBuilder = new SiriJsonBuilder(siri);
-                    return jsonBuilder.buildJson(indent);
+                    resultResponse = jsonBuilder.buildJson(indent);
                 } else {
-                    return APIHelper.createJsonError("Internal server error", "backend error");
+                    resultResponse = APIHelper.createJsonError("Internal server error", "backend error");
                 }
             } catch (Exception e) {
                 logger.error("Cannot process SIRI request", e);
-                return APIHelper.createJsonError("Internal server error", e.getMessage());
+                resultResponse = APIHelper.createJsonError("Internal server error", e.getMessage());
             } catch (Error e) {
                 logger.error("Cannot process SIRI request", e);
-                return APIHelper.createJsonError("Internal server error", e.getMessage());
+                resultResponse = APIHelper.createJsonError("Internal server error", e.getMessage());
             }
 		} else {
 			logger.error("Request parser did not initialize properly, cannot process request. Check the logs for startup exceptions.");
-			return APIHelper.createJsonError("Internal server error",
+			resultResponse = APIHelper.createJsonError("Internal server error",
 					"Request parser did not initialize properly, cannot process request.");
 		}
+	    
+        if(resultResponse == null){
+            resultResponse = APIHelper.createJsonError("Internal server error", "Cannot process SIRI request");
+        }
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        return new ResponseEntity<String>(resultResponse, responseHeaders, HttpStatus.CREATED);
 	}
 
 	/**
@@ -202,10 +212,10 @@ public class RealtimeApiController {
 	 * @return Vehicle Monitoring deliveries as GTFS-RT json
 	 */
 	@RequestMapping(value = "/gtfs-rt/vehicle-positions/json", method = RequestMethod.GET, produces = "application/json; charset=utf-8")
-	public @ResponseBody
-	String getGtfsRtJson(@RequestParam(value = "lineRef", required = false) String lineRef,
+	public ResponseEntity<String> getGtfsRtJson(@RequestParam(value = "lineRef", required = false) String lineRef,
 			@RequestParam(value = "vehicleRef", required = false) String vehicleRef) {
-		if (datasource != null) {
+	    String resultResponse;
+	    if (datasource != null) {
 			try {
 				String xmlResponse = datasource.getVehicleMonitoringData(lineRef, vehicleRef);
 				if (xmlResponse != null) {
@@ -215,23 +225,30 @@ public class RealtimeApiController {
 					Siri siri = (Siri) unmarshaller.unmarshal(reader);
 
 					GtfsRtBuilder builder = new GtfsRtBuilder(siri);
-					return builder.buildJson();
+					resultResponse = builder.buildJson();
 				} else {
-					return "";
+				    resultResponse = "";
 				}
 
 			} catch (Exception e) {
 				logger.error("Cannot process GTFS-RT request", e);
-				return APIHelper.createJsonError("Internal server error", e.getMessage());
+				resultResponse = APIHelper.createJsonError("Internal server error", e.getMessage());
 			} catch (Error e) {
 				logger.error("Cannot process GTFS-RT request", e);
-				return APIHelper.createJsonError("Internal server error", e.getMessage());
+				resultResponse = APIHelper.createJsonError("Internal server error", e.getMessage());
 			}
 		} else {
 			logger.error("Request parser did not initialize properly, cannot process request. Check the logs for startup exceptions.");
-			return APIHelper.createJsonError("Internal server error",
+			resultResponse = APIHelper.createJsonError("Internal server error",
 					"Request parser did not initialize properly, cannot process request.");
 		}
+	    
+        if(resultResponse == null){
+            resultResponse = APIHelper.createJsonError("Internal server error", "Cannot process SIRI request");
+        }
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        return new ResponseEntity<String>(resultResponse, responseHeaders, HttpStatus.CREATED);
 	}
 	
 	   /**
@@ -265,9 +282,9 @@ public class RealtimeApiController {
      * @return General Message deliveries as JSON string
      */
     @RequestMapping(value = "/gm/json", method = RequestMethod.GET, produces = "application/json; charset=utf-8")
-    public @ResponseBody
-    String getJsonGM(
+    public ResponseEntity<String> getJsonGM(
             @RequestParam(value = "indent", required = false) String indent) {
+        String resultResponse;
         if (datasource != null) {
             try {
                 String xmlResponse = datasource.getGeneralMessageData();
@@ -275,22 +292,29 @@ public class RealtimeApiController {
                     Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
                     Siri siri = (Siri) unmarshaller.unmarshal(new StringReader(xmlResponse));                    
                     SiriJsonBuilder jsonBuilder = new SiriJsonBuilder(siri);
-                    return jsonBuilder.buildJson(indent);
+                    resultResponse = jsonBuilder.buildJson(indent);
                 } else {
-                    return "";
+                    resultResponse = "";
                 }
 
             } catch (Exception e) {
                 logger.error("Cannot process SIRI request", e);
-                return APIHelper.createJsonError("Internal server error", e.getMessage());
+                resultResponse = APIHelper.createJsonError("Internal server error", e.getMessage());
             } catch (Error e) {
                 logger.error("Cannot process SIRI request", e);
-                return APIHelper.createJsonError("Internal server error", e.getMessage());
+                resultResponse = APIHelper.createJsonError("Internal server error", e.getMessage());
             }
         } else {
             logger.error("Request parser did not initialize properly, cannot process request. Check the logs for startup exceptions.");
-            return APIHelper.createJsonError("Internal server error",
+            resultResponse = APIHelper.createJsonError("Internal server error",
                     "Request parser did not initialize properly, cannot process request.");
         }
+        
+        if(resultResponse == null){
+            resultResponse = APIHelper.createJsonError("Internal server error", "Cannot process SIRI request");
+        }
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        return new ResponseEntity<String>(resultResponse, responseHeaders, HttpStatus.CREATED);
     }
 }
