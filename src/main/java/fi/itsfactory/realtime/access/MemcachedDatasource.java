@@ -54,19 +54,23 @@ public class MemcachedDatasource implements SiriDatasource {
             memcachedClient.shutdown();
 
             if (responseSAXParser != null) { // init failed, don't even try
-                /*
-                 * If the client has specified either lineRef or vehicleRef, we have to filter the response.
-                 * Since the backend system pushes one single document to the cache, which contains data for
-                 * all vehicles, we have to parse the XML and filter our during parsing.
-                 */
-                try {
-                    VMResponseFilter responseFilter = new VMResponseFilter(lineRef, vehicleRef);
-                    responseSAXParser.parse(new ByteArrayInputStream(latestVM.getBytes()), responseFilter);
-                    latestVM = responseFilter.getFilteredDocument();
-                    return latestVM;
-                } catch (SAXException e) {
-                    return null;
-                } catch (Throwable t) {
+                if(!latestVM.startsWith("<!DOCTYPE html")){
+                    /*
+                     * If the client has specified either lineRef or vehicleRef, we have to filter the response.
+                     * Since the backend system pushes one single document to the cache, which contains data for
+                     * all vehicles, we have to parse the XML and filter our during parsing.
+                     */
+                    try {
+                        VMResponseFilter responseFilter = new VMResponseFilter(lineRef, vehicleRef);
+                        responseSAXParser.parse(new ByteArrayInputStream(latestVM.getBytes()), responseFilter);
+                        latestVM = responseFilter.getFilteredDocument();
+                        return latestVM;
+                    } catch (SAXException e) {
+                        return null;
+                    } catch (Throwable t) {
+                        return null;
+                    }
+                } else {
                     return null;
                 }
             } else {
