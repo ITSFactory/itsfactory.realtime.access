@@ -109,7 +109,11 @@ public class MemcachedDatasource implements SiriDatasource {
 	            String latestVM = memcachedClient.get(gmKey);
 	            memcachedClient.shutdown();
 
-	            return latestVM;
+                if(!latestVM.startsWith("<!DOCTYPE html")){
+                    return latestVM;
+                }else{
+                    return null;
+                }
 	        } catch (IOException e) {
 	            logger.error("Cannot process request", e);
 	            return null;
