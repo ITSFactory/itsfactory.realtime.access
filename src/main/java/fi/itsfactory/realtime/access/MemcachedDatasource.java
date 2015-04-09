@@ -48,7 +48,7 @@ public class MemcachedDatasource implements SiriDatasource {
              */
             MemcachedClientBuilder builder = new XMemcachedClientBuilder(AddrUtil.getAddresses(cacheUrl));
             MemcachedClient memcachedClient = builder.build();
-            memcachedClient.setTranscoder(new SerializingTranscoder(100 * 1024 * 1024));
+            //memcachedClient.setTranscoder(new SerializingTranscoder(100 * 1024 * 1024));
             String latestVM = memcachedClient.get(vmKey);
 
             memcachedClient.shutdown();

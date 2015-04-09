@@ -75,7 +75,7 @@ public class VMResponseFilterV2 extends DefaultHandler {
 			currentElement = element;
 		}
 		
-		if("VehicleActivity".equals(qName)){
+		if("VehicleActivity".equals(localName)){
 			lineRefMatched = false;
 			vehicleRefMatched = false;
 		}
@@ -85,9 +85,9 @@ public class VMResponseFilterV2 extends DefaultHandler {
 	public void characters(char ch[], int start, int length) throws SAXException {
 		String contents = new String(ch, start, length).trim();
 		currentElement.setTextContent(contents);
-		if(filteringVehicleRef != null && "VehicleRef".equals(currentElement.getNodeName()) && filteringVehicleRef.equals(contents)){
+		if(filteringVehicleRef != null && "VehicleRef".equals(currentElement.getLocalName()) && filteringVehicleRef.equals(contents)){
 			vehicleRefMatched = true;
-		}else if(filteringLineRef != null && "LineRef".equals(currentElement.getNodeName()) && filteringLineRef.equals(contents)){
+		}else if(filteringLineRef != null && "LineRef".equals(currentElement.getLocalName()) && filteringLineRef.equals(contents)){
             lineRefMatched = true;
         }
 	}
@@ -95,7 +95,7 @@ public class VMResponseFilterV2 extends DefaultHandler {
 	@Override
 	public void endElement(String uri, String localName, String qName) throws SAXException {
 	    Node parent = currentElement.getParentNode();
-		if("VehicleActivity".equals(qName)){
+		if("VehicleActivity".equals(localName)){
 	        /*
 	         * If client has specified both lineRef and vehicleRef filters, an element must not match either in order
 	         * to be incluced. If the client has specified only one of the filters, the element must not match that filter

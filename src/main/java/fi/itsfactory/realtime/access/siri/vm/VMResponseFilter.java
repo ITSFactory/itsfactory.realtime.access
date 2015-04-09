@@ -77,7 +77,7 @@ public class VMResponseFilter extends DefaultHandler {
 			currentElement = element;
 		}
 		
-		if("VehicleActivity".equals(qName)){
+		if("VehicleActivity".equals(localName)){
 			lineRefMatched = false;
 			vehicleRefMatched = false;
 		}
@@ -87,17 +87,17 @@ public class VMResponseFilter extends DefaultHandler {
 	public void characters(char ch[], int start, int length) throws SAXException {
 		String contents = new String(ch, start, length).trim();
 		currentElement.setTextContent(contents);
-		if(filteringVehicleRef != null && "VehicleRef".equals(currentElement.getNodeName()) && filteringVehicleRef.equals(contents)){
+		if(filteringVehicleRef != null && "VehicleRef".equals(currentElement.getLocalName()) && filteringVehicleRef.equals(contents)){
 			vehicleRefMatched = true;
-		}else if(filteringLineRef != null && "JourneyPatternRef".equals(currentElement.getNodeName()) && filteringLineRef.equals(contents)){
+		}else if(filteringLineRef != null && "JourneyPatternRef".equals(currentElement.getLocalName()) && filteringLineRef.equals(contents)){
 			lineRefMatched = true;
-		}else if(filteringLineRef != null && "LineRef".equals(currentElement.getNodeName()) && filteringLineRef.equals(contents)){
+		}else if(filteringLineRef != null && "LineRef".equals(currentElement.getLocalName()) && filteringLineRef.equals(contents)){
             lineRefMatched = true;
         }
 
-		if("JourneyPatternRef".equals(currentElement.getNodeName())){
+		if("JourneyPatternRef".equals(currentElement.getLocalName())){
 		    journeyPatternRef = contents;
-		}else if("DatedVehicleJourneyRef".equals(currentElement.getNodeName())){
+		}else if("DatedVehicleJourneyRef".equals(currentElement.getLocalName())){
 		    String parts[] = contents.split("_");
 		    if(parts.length == 3){
 		        currentElement.setTextContent(parts[parts.length - 1]);
@@ -108,7 +108,7 @@ public class VMResponseFilter extends DefaultHandler {
 	@Override
 	public void endElement(String uri, String localName, String qName) throws SAXException {
 	    Node parent = currentElement.getParentNode();
-		if("VehicleActivity".equals(qName)){
+		if("VehicleActivity".equals(localName)){
 	        /*
 	         * If client has specified both lineRef and vehicleRef filters, an element must not match either in order
 	         * to be incluced. If the client has specified only one of the filters, the element must not match that filter
@@ -127,10 +127,10 @@ public class VMResponseFilter extends DefaultHandler {
 			        journeyPatternRef = null;
 			    }
 			}
-		}else if("Extensions".equals(qName) || "OriginAimedDepartureTime".equals(qName)
-		        || "DestinationShortName".equals(qName) || "OriginShortName".equals(qName) || "OnwardCalls".equals(qName)){
+		}else if("Extensions".equals(localName) || "OriginAimedDepartureTime".equals(localName)
+		        || "DestinationShortName".equals(localName) || "OriginShortName".equals(localName) || "OnwardCalls".equals(localName)){
 		    parent.removeChild(currentElement);
-		}else if("JourneyPatternRef".equals(qName)){
+		}else if("JourneyPatternRef".equals(localName)){
             parent.removeChild(currentElement);
         }
 		currentElement = parent;
