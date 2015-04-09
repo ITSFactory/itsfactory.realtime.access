@@ -24,11 +24,11 @@ public class SiriRequestHandler extends DefaultHandler {
 	}
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-		if("VehicleMonitoringRef".equals(qName)){
+		if("VehicleMonitoringRef".equals(localName)){
 			vmRef = true;
-		}else if("VehicleRef".equals(qName)){
+		}else if("VehicleRef".equals(localName)){
 			vRef = true;
-		}else if("LineRef".equals(qName)){
+		}else if("LineRef".equals(localName)){
 			lRef = true;
 		}
 	}
@@ -46,11 +46,11 @@ public class SiriRequestHandler extends DefaultHandler {
 	
 	@Override
 	public void endElement(String uri, String localName, String qName) throws SAXException {
-		if("VehicleMonitoringRef".equals(qName)){
+		if("VehicleMonitoringRef".equals(localName)){
 			vmRef = false;
-		}else if("VehicleRef".equals(qName)){
+		}else if("VehicleRef".equals(localName)){
 			vRef = false;
-		}else if("LineRef".equals(qName)){
+		}else if("LineRef".equals(localName)){
 			lRef = false;
 		}	
 	}
